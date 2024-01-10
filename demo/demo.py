@@ -13,6 +13,7 @@ import torch
 import torchaudio
 from attrdict import AttrDict
 from typing import Dict, Union
+from collections import namedtuple
 
 from diffusion.respace import SpacedDiffusion
 from model.cfg_sampler import ClassifierFreeSampleModel
@@ -21,22 +22,27 @@ from utils.misc import fixseed
 from utils.model_util import create_model_and_diffusion, load_model
 from visualize.render_codes import BodyRenderer
 
+ModelInfo = namedtuple('ModelInfo',
+                       ['name', 'face_args', 'pose_args', 'face_model', 'pose_model', 'render_name', 'pose_resume_trans'])
+
 
 class GradioModel:
-    def __init__(self, face_args, pose_args) -> None:
+    def __init__(self, info: ModelInfo) -> None:
+        self.model_info = info
+
         self.face_model, self.face_diffusion, self.device = self._setup_model(
-            face_args, "checkpoints/diffusion/c1_face/model000155000.pt"
+            info.face_args, info.face_model,
         )
         self.pose_model, self.pose_diffusion, _ = self._setup_model(
-            pose_args, "checkpoints/diffusion/c1_pose/model000340000.pt"
+            info.pose_args, info.pose_model,
         )
         # load standardization stuff
-        stats = torch.load("dataset/PXB184/data_stats.pth")
+        stats = torch.load(f"dataset/{info.render_name}/data_stats.pth")
         stats["pose_mean"] = stats["pose_mean"].reshape(-1)
         stats["pose_std"] = stats["pose_std"].reshape(-1)
         self.stats = stats
         # set up renderer
-        config_base = f"./checkpoints/ca_body/data/PXB184"
+        config_base = f"./checkpoints/ca_body/data/{info.render_name}"
         self.body_renderer = BodyRenderer(
             config_base=config_base,
             render_rgb=True,
@@ -216,51 +222,59 @@ def generate_results(audio: np.ndarray, num_repetitions: int, top_p: float):
     return face_results, pose_results, dual_audio[0].transpose(1, 0).astype(np.float32)
 
 
-def audio_to_avatar(audio: np.ndarray, num_repetitions: int, top_p: float, actor: str):
+def audio_to_avatar(audio: np.ndarray, num_repetitions: int, top_p: float, actor: str, render: str):
     global gradio_model
 
     model_info_list = [
-        {
-            name: "Actor 1",
-            face: './checkpoints/diffusion/c1_face/args.json',
-            pose: './checkpoints/diffusion/c1_pose/args.json',
-            face_model: 'checkpoints/diffusion/c1_face/model000155000.pt',
-            pose_model: 'checkpoints/diffusion/c1_pose/model000340000.pt',
-        },
+        ModelInfo(
+            name="Actor 1",
+            face_args='./checkpoints/diffusion/c1_face/args.json',
+            pose_args='./checkpoints/diffusion/c1_pose/args.json',
+            face_model='checkpoints/diffusion/c1_face/model000155000.pt',
+            pose_model='checkpoints/diffusion/c1_pose/model000340000.pt',
+            render_name=render,
+            pose_resume_trans="checkpoints/guide/c1_pose/checkpoints/iter-0100000.pt",
+        ),
 
-        {
-            name: "Actor 2",
-            face: './checkpoints/diffusion/c2_face/args.json',
-            pose: './checkpoints/diffusion/c2_pose/args.json',
-            face_model: 'checkpoints/diffusion/c2_face/model000190000.pt',
-            pose_model: 'checkpoints/diffusion/c2_pose/model000190000.pt',
-        },
+        ModelInfo(
+            name="Actor 2",
+            face_args='./checkpoints/diffusion/c2_face/args.json',
+            pose_args='./checkpoints/diffusion/c2_pose/args.json',
+            face_model='checkpoints/diffusion/c2_face/model000190000.pt',
+            pose_model='checkpoints/diffusion/c2_pose/model000190000.pt',
+            render_name=render,
+            pose_resume_trans="checkpoints/guide/c2_pose/checkpoints/iter-0135000.pt",
+        ),
 
-        {
-            name: "Actor 3",
-            face: './checkpoints/diffusion/c3_face/args.json',
-            pose: './checkpoints/diffusion/c3_pose/args.json',
-            face_model: 'checkpoints/diffusion/c3_face/model000180000.pt',
-            pose_model: 'checkpoints/diffusion/c3_pose/model000455000.pt',
-        },
+        ModelInfo(
+            name="Actor 3",
+            face_args='./checkpoints/diffusion/c3_face/args.json',
+            pose_args='./checkpoints/diffusion/c3_pose/args.json',
+            face_model='checkpoints/diffusion/c3_face/model000180000.pt',
+            pose_model='checkpoints/diffusion/c3_pose/model000455000.pt',
+            render_name=render,
+            pose_resume_trans="checkpoints/guide/c3_pose/checkpoints/iter-0210000.pt",
+        ),
 
-        {
-            name: "Actor 4",
-            face: './checkpoints/diffusion/c4_face/args.json',
-            pose: './checkpoints/diffusion/c4_pose/args.json',
-            face_model: 'checkpoints/diffusion/c4_face/model000185000.pt',
-            pose_model: 'checkpoints/diffusion/c4_pose/model000350000.pt',
-        }
+        ModelInfo(
+            name="Actor 4",
+            face_args='./checkpoints/diffusion/c4_face/args.json',
+            pose_args='./checkpoints/diffusion/c4_pose/args.json',
+            face_model='checkpoints/diffusion/c4_face/model000185000.pt',
+            pose_model='checkpoints/diffusion/c4_pose/model000350000.pt',
+            render_name=render,
+            pose_resume_trans="checkpoints/guide/c4_pose/checkpoints/iter-0135000.pt",
+        )
     ]
-    try:
-        pose_index = ["Actor 1", "Actor 2", "Actor 3", "Actor 4"].index(actor) + 1
-    except Exception as e:
-        pose_index = 1
 
-    gradio_model = GradioModel(
-        face_args=f"./checkpoints/diffusion/c{pose_index}_face/args.json",
-        pose_args=f"./checkpoints/diffusion/c{pose_index}_pose/args.json",
-    )
+    try:
+        actor_index = ["Actor 1", "Actor 2", "Actor 3", "Actor 4"].index(actor)
+    except Exception as e:
+        actor_index = 0
+
+    feed = model_info_list[actor_index]
+
+    gradio_model = GradioModel(feed)
 
     face_results, pose_results, audio = generate_results(audio, num_repetitions, top_p)
     # returns: num_rep x T x 104
@@ -301,10 +315,14 @@ demo = gr.Interface(
         ),
         gr.Dropdown(
             ["Actor 1", "Actor 2", "Actor 3", "Actor 4"], label="Actor", info="Select Actor to play with!",
+        ),
+        gr.Dropdown(
+            ["GQS883", "PXB184", "RLW104", "TXB805"], label="Render", info="Select Render",
         )
     ],  # input type
-    [gr.Video(format="mp4", visible=True)]
-    + [gr.Video(format="mp4", visible=False) for _ in range(9)],  # output type
+    [],
+    # [gr.Video(format="mp4", visible=True)]
+    # + [gr.Video(format="mp4", visible=False) for _ in range(9)],  # output type
     title='"From Audio to Photoreal Embodiment: Synthesizing Humans in Conversations" Demo',
     description="You can generate a photorealistic avatar from your voice! <br/>\
         1) Start by recording your audio.  <br/>\
@@ -319,5 +337,6 @@ demo = gr.Interface(
 if __name__ == "__main__":
     gradio_model: GradioModel = None
 
-    fixseed(10)
-    demo.launch(share=True)
+    # fixseed(10)
+    # demo.launch(share=True)
+    demo.launch()
