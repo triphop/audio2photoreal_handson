@@ -339,6 +339,5 @@ demo = gr.Interface(
 if __name__ == "__main__":
     gradio_model: GradioModel = None
 
-    # fixseed(10)
-    # demo.launch(share=True)
-    demo.launch()
+    fixseed(10)
+    demo.launch(share=True)
