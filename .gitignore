@@ -1,0 +1,9 @@
+*~
+.*~
+.*.swp
+
+.DS_Store
+
+.idea/
+dataset/
+checkpoints/
