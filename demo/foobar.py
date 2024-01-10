@@ -54,7 +54,7 @@ class GradioModel:
 def audio_to_avatar(audio: np.ndarray, num_repetitions: int, top_p: float, actor: str, render: str):
     global gradio_model
 
-    if type(render) != 'str' or render == "":
+    if not isinstance(render, str) or render == "":
         render = "PXB184"
 
     model_info_list = [
