@@ -1,4 +1,6 @@
-for i in "PXB184" "RLW104" "TXB805" "GQS883" 
+#! /bin/sh
+
+for i in "PXB184" "RLW104" "TXB805" "GQS883"
 do
     # download motion models
     wget http://audio2photoreal_models.berkeleyvision.org/${i}_models.tar || { echo 'downloading model failed' ; exit 1; }
