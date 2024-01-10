@@ -219,6 +219,39 @@ def generate_results(audio: np.ndarray, num_repetitions: int, top_p: float):
 def audio_to_avatar(audio: np.ndarray, num_repetitions: int, top_p: float, actor: str):
     global gradio_model
 
+    model_info_list = [
+        {
+            name: "Actor 1",
+            face: './checkpoints/diffusion/c1_face/args.json',
+            pose: './checkpoints/diffusion/c1_pose/args.json',
+            face_model: 'checkpoints/diffusion/c1_face/model000155000.pt',
+            pose_model: 'checkpoints/diffusion/c1_pose/model000340000.pt',
+        },
+
+        {
+            name: "Actor 2",
+            face: './checkpoints/diffusion/c2_face/args.json',
+            pose: './checkpoints/diffusion/c2_pose/args.json',
+            face_model: 'checkpoints/diffusion/c2_face/model000190000.pt',
+            pose_model: 'checkpoints/diffusion/c2_pose/model000190000.pt',
+        },
+
+        {
+            name: "Actor 3",
+            face: './checkpoints/diffusion/c3_face/args.json',
+            pose: './checkpoints/diffusion/c3_pose/args.json',
+            face_model: 'checkpoints/diffusion/c3_face/model000180000.pt',
+            pose_model: 'checkpoints/diffusion/c3_pose/model000455000.pt',
+        },
+
+        {
+            name: "Actor 4",
+            face: './checkpoints/diffusion/c4_face/args.json',
+            pose: './checkpoints/diffusion/c4_pose/args.json',
+            face_model: 'checkpoints/diffusion/c4_face/model000185000.pt',
+            pose_model: 'checkpoints/diffusion/c4_pose/model000350000.pt',
+        }
+    ]
     try:
         pose_index = ["Actor 1", "Actor 2", "Actor 3", "Actor 4"].index(actor) + 1
     except Exception as e:
