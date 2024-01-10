@@ -62,7 +62,7 @@ class GradioModel:
         args.output_dir = "/tmp/gradio/"
         args.timestep_respacing = "ddim100"
         if args.data_format == "pose":
-            args.resume_trans = "checkpoints/guide/c1_pose/checkpoints/iter-0100000.pt"
+            args.resume_trans = self.model_info.pose_resume_trans
 
         ## create model
         model, diffusion = create_model_and_diffusion(args, split_type="test")
