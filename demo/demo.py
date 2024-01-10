@@ -225,6 +225,9 @@ def generate_results(audio: np.ndarray, num_repetitions: int, top_p: float):
 def audio_to_avatar(audio: np.ndarray, num_repetitions: int, top_p: float, actor: str, render: str):
     global gradio_model
 
+    if type(render) != 'str' or render == "":
+        render = "PXB184"
+
     model_info_list = [
         ModelInfo(
             name="Actor 1",
@@ -320,9 +323,8 @@ demo = gr.Interface(
             ["GQS883", "PXB184", "RLW104", "TXB805"], label="Render", info="Select Render",
         )
     ],  # input type
-    [],
-    # [gr.Video(format="mp4", visible=True)]
-    # + [gr.Video(format="mp4", visible=False) for _ in range(9)],  # output type
+    [gr.Video(format="mp4", visible=True)]
+    + [gr.Video(format="mp4", visible=False) for _ in range(9)],  # output type
     title='"From Audio to Photoreal Embodiment: Synthesizing Humans in Conversations" Demo',
     description="You can generate a photorealistic avatar from your voice! <br/>\
         1) Start by recording your audio.  <br/>\

@@ -54,6 +54,9 @@ class GradioModel:
 def audio_to_avatar(audio: np.ndarray, num_repetitions: int, top_p: float, actor: str, render: str):
     global gradio_model
 
+    if type(render) != 'str' or render == "":
+        render = "PXB184"
+
     model_info_list = [
         ModelInfo(
             name="Actor 1",
@@ -100,6 +103,7 @@ def audio_to_avatar(audio: np.ndarray, num_repetitions: int, top_p: float, actor
         actor_index = ["Actor 1", "Actor 2", "Actor 3", "Actor 4"].index(actor)
     except Exception as e:
         actor_index = 0
+
 
     feed = model_info_list[actor_index]
 
